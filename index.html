@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Guitar Scale Renderer</title>
+
+<script defer src="https://unpkg.com/vexflow@4.2.3/build/cjs/vexflow.js"></script>
+  <script defer src="./tab.js"></script>
+
+  <style>
+    body { font-family: system-ui, -apple-system, sans-serif; margin: 24px; }
+    #controls { display:flex; flex-wrap:wrap; gap:12px; align-items:center; padding:12px; border:1px solid #e5e5e5; border-radius:10px; background:#fafafa; margin-bottom:14px; }
+    #controls label { display:inline-flex; align-items:center; gap:8px; }
+    select { padding: 6px 8px; border-radius: 8px; border: 1px solid #ddd; background:#fff; }
+    #output { border:1px solid #ddd; padding:14px; border-radius:10px; }
+    .section { margin: 12px 0 20px; padding: 10px 10px 14px; border: 1px solid #eee; border-radius: 10px; background: #fff; }
+    .section-title { font-weight:650; margin: 0 0 8px; }
+    .vf-root-note text { font-weight: 700; fill: #bb2a2a; }
+    .vf-root-note circle, .vf-root-note path { stroke:#bb2a2a !important; fill:#ffefef !important; }
+  </style>
+</head>
+
+<body>
+  <div id="controls">
+    <label>
+      Key
+      <select id="keySelect">
+        <option value="C">C</option>
+        <option value="C#">C#</option>
+        <option value="D">D</option>
+        <option value="D#">D#</option>
+        <option value="E">E</option>
+        <option value="F">F</option>
+        <option value="F#" selected>F#</option>
+        <option value="G">G</option>
+        <option value="G#">G#</option>
+        <option value="A">A</option>
+        <option value="A#">A#</option>
+        <option value="B">B</option>
+      </select>
+    </label>
+
+    <label>
+      Scale
+      <select id="scaleSelect">
+        <option>Major</option>
+        <option>Minor</option>
+        <option>Melodic Minor</option>
+        <option>Harmonic Minor</option>
+        <option>Major Pentatonic</option>
+        <option selected>Minor Pentatonic</option>
+        <option>Blues</option>
+        <option>Rock 'n' roll</option>
+        <option>Ionian</option>
+        <option>Dorian</option>
+        <option>Phrygian</option>
+        <option>Lydian</option>
+        <option>Mixolydian</option>
+        <option>Aeolian</option>
+        <option>Locrian</option>
+        <option>Dorian Bebop</option>
+        <option>Mixolydian Bebop</option>
+        <option>Whole Tone</option>
+        <option>Half Whole Diminished</option>
+        <option>Whole Half Diminished</option>
+        <option>Spanish Major</option>
+        <option>Persian</option>
+        <option>Gypsy Major</option>
+      </select>
+    </label>
+
+    <label><input type="radio" name="mode" value="tab" checked> TAB</label>
+    <label><input type="radio" name="mode" value="standard"> Standard</label>
+  </div>
+
+  <div id="output"></div>
+</body>
+</html>
