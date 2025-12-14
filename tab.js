@@ -438,18 +438,32 @@ function renderSection(parent, title, notesData, mode) {
   const section = document.createElement("div");
   section.className = "section";
 
-  const h = document.createElement("div");
-  h.className = "section-title";
-  h.textContent = title;
-  section.appendChild(h);
+  const header = document.createElement("div");
+  header.className = "section-header";
+  const label = document.createElement("div");
+  label.textContent = title;
+  header.appendChild(label);
+  const copy = document.createElement("div");
+  copy.className = "copy-btn";
+  copy.textContent = "⧉";
+  header.appendChild(copy);
+  section.appendChild(header);
 
+  const body = document.createElement("div");
+  body.className = "section-body";
   const mount = document.createElement("div");
-  section.appendChild(mount);
+  body.appendChild(mount);
+  section.appendChild(body);
 
   parent.appendChild(section);
 
   if (mode === "standard") renderGrandStaff(mount, notesData);
   else renderTab(mount, notesData);
+}
+
+function updateBadge(key, scale) {
+  const badge = document.getElementById("keyScaleBadge");
+  if (badge) badge.textContent = `${key} · ${scale}`;
 }
 
 function renderApp() {
@@ -465,6 +479,10 @@ function renderApp() {
   const key = keySelect.value;
   const scale = scaleSelect.value;
   const mode = modeInput ? modeInput.value : "tab";
+
+  const segmented = document.getElementById("modeSegmented");
+  if (segmented) segmented.setAttribute("data-active", mode === "standard" ? "standard" : "tab");
+  updateBadge(key, scale);
 
   output.innerHTML = "";
 

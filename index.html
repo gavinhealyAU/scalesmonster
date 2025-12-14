@@ -1,79 +1,299 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Guitar Scale Renderer</title>
 
-<script defer src="https://unpkg.com/vexflow@4.2.3/build/cjs/vexflow.js"></script>
+  <script defer src="https://unpkg.com/vexflow@4.2.3/build/cjs/vexflow.js"></script>
   <script defer src="./tab.js"></script>
 
   <style>
-    body { font-family: system-ui, -apple-system, sans-serif; margin: 24px; }
-    #controls { display:flex; flex-wrap:wrap; gap:12px; align-items:center; padding:12px; border:1px solid #e5e5e5; border-radius:10px; background:#fafafa; margin-bottom:14px; }
-    #controls label { display:inline-flex; align-items:center; gap:8px; }
-    select { padding: 6px 8px; border-radius: 8px; border: 1px solid #ddd; background:#fff; }
-    #output { border:1px solid #ddd; padding:14px; border-radius:10px; }
-    .section { margin: 12px 0 20px; padding: 10px 10px 14px; border: 1px solid #eee; border-radius: 10px; background: #fff; }
-    .section-title { font-weight:650; margin: 0 0 8px; }
-    .vf-root-note text { font-weight: 700; fill: #bb2a2a; }
-    .vf-root-note circle, .vf-root-note path { stroke:#bb2a2a !important; fill:#ffefef !important; }
+    :root {
+      --bg: linear-gradient(135deg, #f7f9fc 0%, #eef2f8 100%);
+      --card: #ffffff;
+      --border: #e3e7ef;
+      --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+      --text: #0f172a;
+      --muted: #6b7280;
+      --accent: #2563eb;
+      --accent-soft: #e1e9fb;
+      --pill: #f3f6fb;
+      --badge: #0f172a;
+      --badge-text: #e2e8f0;
+      --radius: 14px;
+      --radius-sm: 10px;
+      --control-h: 42px;
+      --font: "Inter", system-ui, -apple-system, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: var(--font);
+      color: var(--text);
+      background: var(--bg);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .shell {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 28px 18px 40px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 18px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 16px;
+    }
+
+    .logo-box {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #f5f7fb;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .titles h1 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 700;
+    }
+    .titles p {
+      margin: 3px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .badge {
+      margin-left: auto;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: var(--badge);
+      color: var(--badge-text);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px 16px 10px;
+      margin-bottom: 16px;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      align-items: center;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .control-label {
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    select {
+      appearance: none;
+      width: 100%;
+      height: var(--control-h);
+      padding: 0 14px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text);
+      font-size: 15px;
+      font-weight: 600;
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='none' stroke='%236b7280' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 5l3 3 3-3'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      background-size: 14px;
+    }
+
+    select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+    }
+
+   /* Make the pill position relative to the segmented control, not the page */
+.segmented {
+  position: relative; /* <-- add this */
+  overflow: hidden;   /* <-- add this to prevent any bleed */
+}
+
+/* Ensure labels sit above the pill */
+.segmented label {
+  position: relative; /* <-- add this */
+  z-index: 2;         /* <-- add this */
+}
+
+/* Keep pill behind labels */
+.segmented .pill {
+  z-index: 1;         /* (you already set z-index:0, set it to 1 or keep 0, either is fine) */
+}
+
+    .helper {
+      margin-top: 6px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    #output { margin-top: 10px; }
+
+    .section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow);
+      padding: 12px 14px 10px;
+      margin-bottom: 14px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      color: var(--text);
+      font-size: 15px;
+      margin-bottom: 8px;
+    }
+
+    .section-header .copy-btn {
+      margin-left: auto;
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--pill);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      font-size: 14px;
+      cursor: default;
+    }
+
+    .section-body {
+      overflow-x: auto;
+    }
+    .section-body svg {
+      min-width: 820px;
+      display: block;
+    }
+
+    @media (max-width: 640px) {
+      header { flex-wrap: wrap; }
+      .badge { width: 100%; text-align: center; margin-left: 0; }
+      .controls { grid-template-columns: 1fr; }
+      .segmented { width: 100%; justify-content: space-between; }
+    }
   </style>
 </head>
 
 <body>
-  <div id="controls">
-    <label>
-      Key
-      <select id="keySelect">
-        <option value="C">C</option>
-        <option value="C#">C#</option>
-        <option value="D">D</option>
-        <option value="D#">D#</option>
-        <option value="E">E</option>
-        <option value="F">F</option>
-        <option value="F#" selected>F#</option>
-        <option value="G">G</option>
-        <option value="G#">G#</option>
-        <option value="A">A</option>
-        <option value="A#">A#</option>
-        <option value="B">B</option>
-      </select>
-    </label>
+  <div class="shell">
+    <header>
+      <div class="logo-box">GS</div>
+      <div class="titles">
+        <h1>Guitar Scale Renderer</h1>
+        <p>3NPS for diatonic scales, 5 boxes for minor pentatonic</p>
+      </div>
+      <div class="badge" id="keyScaleBadge">F# · Minor Pentatonic</div>
+    </header>
 
-    <label>
-      Scale
-      <select id="scaleSelect">
-        <option>Major</option>
-        <option>Minor</option>
-        <option>Melodic Minor</option>
-        <option>Harmonic Minor</option>
-        <option>Major Pentatonic</option>
-        <option selected>Minor Pentatonic</option>
-        <option>Blues</option>
-        <option>Rock 'n' roll</option>
-        <option>Ionian</option>
-        <option>Dorian</option>
-        <option>Phrygian</option>
-        <option>Lydian</option>
-        <option>Mixolydian</option>
-        <option>Aeolian</option>
-        <option>Locrian</option>
-        <option>Dorian Bebop</option>
-        <option>Mixolydian Bebop</option>
-        <option>Whole Tone</option>
-        <option>Half Whole Diminished</option>
-        <option>Whole Half Diminished</option>
-        <option>Spanish Major</option>
-        <option>Persian</option>
-        <option>Gypsy Major</option>
-      </select>
-    </label>
+    <div class="card">
+      <div class="controls">
+        <div class="control-group">
+          <span class="control-label">Key</span>
+          <select id="keySelect">
+            <option value="C">C</option>
+            <option value="C#">C#</option>
+            <option value="D">D</option>
+            <option value="D#">D#</option>
+            <option value="E">E</option>
+            <option value="F">F</option>
+            <option value="F#" selected>F#</option>
+            <option value="G">G</option>
+            <option value="G#">G#</option>
+            <option value="A">A</option>
+            <option value="A#">A#</option>
+            <option value="B">B</option>
+          </select>
+        </div>
 
-    <label><input type="radio" name="mode" value="tab" checked> TAB</label>
-    <label><input type="radio" name="mode" value="standard"> Standard</label>
+        <div class="control-group">
+          <span class="control-label">Scale</span>
+          <select id="scaleSelect">
+            <option>Major</option>
+            <option>Minor</option>
+            <option>Melodic Minor</option>
+            <option>Harmonic Minor</option>
+            <option>Major Pentatonic</option>
+            <option selected>Minor Pentatonic</option>
+            <option>Blues</option>
+            <option>Rock 'n' roll</option>
+            <option>Ionian</option>
+            <option>Dorian</option>
+            <option>Phrygian</option>
+            <option>Lydian</option>
+            <option>Mixolydian</option>
+            <option>Aeolian</option>
+            <option>Locrian</option>
+            <option>Dorian Bebop</option>
+            <option>Mixolydian Bebop</option>
+            <option>Whole Tone</option>
+            <option>Half Whole Diminished</option>
+            <option>Whole Half Diminished</option>
+            <option>Spanish Major</option>
+            <option>Persian</option>
+            <option>Gypsy Major</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <span class="control-label">Mode</span>
+          <div class="segmented" data-active="tab" id="modeSegmented">
+            <div class="pill"></div>
+            <input type="radio" id="modeTab" name="mode" value="tab" checked>
+            <label for="modeTab">TAB</label>
+            <input type="radio" id="modeStd" name="mode" value="standard">
+            <label for="modeStd">Standard</label>
+          </div>
+        </div>
+      </div>
+      <div class="helper">Minor pentatonic shows 5 fixed boxes; all other scales show 3NPS positions.</div>
+    </div>
+
+    <div id="output"></div>
   </div>
-
-  <div id="output"></div>
 </body>
 </html>
