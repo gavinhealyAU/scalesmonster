@@ -11,6 +11,7 @@ if (!VF) {
 
 // Global state for root note toggle
 let showRootNotes = true;
+let showNoteNames = false;
 
 const {
   Formatter,
@@ -21,7 +22,8 @@ const {
   Stave,
   StaveNote,
   StaveConnector,
-  Accidental
+  Accidental,
+  Annotation
 } = VF;
 
 // ---------------------------
@@ -105,6 +107,24 @@ function addAccidentalsIfNeeded(staveNote) {
   staveNote.keys.forEach((key, idx) => {
     if (key.includes("#")) staveNote.addModifier(new Accidental("#"), idx);
     if (key.includes("b")) staveNote.addModifier(new Accidental("b"), idx);
+  });
+}
+
+function noteNameFromNoteData(n) {
+  const midi = STRING_OPEN_MIDI[n.string] + n.fret;
+  return midiToPcName(midi);
+}
+
+function alignAnnotationRow(containerEl, fixedY) {
+  const svg = containerEl.querySelector("svg");
+  if (!svg) return;
+
+  const selectors = ["text.vf-annotation", "g.vf-annotation text", "text.vf-annotation-text"];
+  selectors.forEach(sel => {
+    svg.querySelectorAll(sel).forEach(el => {
+      el.removeAttribute("transform");
+      el.setAttribute("y", fixedY);
+    });
   });
 }
 
@@ -354,6 +374,13 @@ function renderTab(containerEl, notesData) {
         strokeStyle: "#dc2626"
       });
     }
+    if (showNoteNames) {
+      const label = noteNameFromNoteData(n);
+      const ann = new Annotation(label);
+      ann.setVerticalJustification(Annotation.VerticalJustify.TOP);
+      ann.setYShift(-20);
+      tn.addModifier(ann, 0);
+    }
     return tn;
   });
 
@@ -362,6 +389,8 @@ function renderTab(containerEl, notesData) {
 
   new Formatter().joinVoices([voice]).format([voice], 800);
   voice.draw(ctx, stave);
+
+  alignAnnotationRow(containerEl, 32);
 }
 
 function renderGrandStaff(containerEl, notesData) {
@@ -406,6 +435,13 @@ function renderGrandStaff(containerEl, notesData) {
           strokeStyle: "#dc2626"
         });
       }
+      if (showNoteNames) {
+        const label = noteNameFromNoteData(n);
+        const ann = new Annotation(label);
+        ann.setVerticalJustification(Annotation.VerticalJustify.TOP);
+        ann.setYShift(-18);
+        t.addModifier(ann, 0);
+      }
 
       trebleNotes.push(t);
       bassNotes.push(new StaveNote({ keys: ["b/3"], duration: "qr", clef: "bass" }));
@@ -420,6 +456,13 @@ function renderGrandStaff(containerEl, notesData) {
           strokeStyle: "#dc2626"
         });
       }
+      if (showNoteNames) {
+        const label = noteNameFromNoteData(n);
+        const ann = new Annotation(label);
+        ann.setVerticalJustification(Annotation.VerticalJustify.TOP);
+        ann.setYShift(-18);
+        b.addModifier(ann, 0);
+      }
 
       bassNotes.push(b);
     }
@@ -431,6 +474,9 @@ function renderGrandStaff(containerEl, notesData) {
   new Formatter().format([vT, vB], 800);
   vT.draw(ctx, treble);
   vB.draw(ctx, bass);
+
+  alignAnnotationRow(containerEl, 38);
+  alignAnnotationRow(containerEl, 38);
 }
 
 // ===========================
@@ -643,6 +689,7 @@ function renderApp() {
   const output = document.getElementById("output");
   const modeInput = Array.from(document.querySelectorAll('input[name="mode"]')).find(r => r.checked);
   const rootToggle = document.getElementById("rootToggle");
+  const noteNameToggle = document.getElementById("noteNameToggle");
 
   if (!keySelect || !scaleSelect || !output) {
     throw new Error("Missing required elements: keySelect, scaleSelect, output.");
@@ -650,6 +697,10 @@ function renderApp() {
 
   if (rootToggle) {
     showRootNotes = rootToggle.checked;
+  }
+
+  if (noteNameToggle) {
+    showNoteNames = noteNameToggle.checked;
   }
 
   const key = keySelect.value;
@@ -699,6 +750,7 @@ window.addEventListener("DOMContentLoaded", () => {
   const scaleSelect = document.getElementById("scaleSelect");
   const modeRadios = document.querySelectorAll('input[name="mode"]');
   const rootToggle = document.getElementById("rootToggle");
+  const noteNameToggle = document.getElementById("noteNameToggle");
 
   renderApp();
 
@@ -706,4 +758,5 @@ window.addEventListener("DOMContentLoaded", () => {
   if (scaleSelect) scaleSelect.addEventListener("change", renderApp);
   if (modeRadios && modeRadios.length) modeRadios.forEach(r => r.addEventListener("change", renderApp));
   if (rootToggle) rootToggle.addEventListener("change", renderApp);
+  if (noteNameToggle) noteNameToggle.addEventListener("change", renderApp);
 });
