@@ -10,21 +10,23 @@
 
   <style>
     :root {
-      --bg: linear-gradient(135deg, #f7f9fc 0%, #eef2f8 100%);
-      --card: #ffffff;
-      --border: #e3e7ef;
-      --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
-      --text: #0f172a;
-      --muted: #6b7280;
-      --accent: #2563eb;
-      --accent-soft: #e1e9fb;
-      --pill: #f3f6fb;
-      --badge: #0f172a;
-      --badge-text: #e2e8f0;
+      /* Lounge theme tokens */
+      --bg: radial-gradient(1200px 700px at 20% 10%, rgba(22, 19, 16, 0.9) 0%, rgba(18, 16, 14, 0.95) 40%, rgba(12, 11, 10, 1) 100%),
+             linear-gradient(180deg, rgba(30, 27, 24, 0.6) 0%, rgba(17, 16, 15, 0.8) 100%);
+      --card: rgba(40, 36, 32, 0.55);
+      --border: rgba(255, 199, 125, 0.18);
+      --shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+      --text: #e6e1db;
+      --muted: #b3a89b;
+      --accent: #d69e2e; /* warm amber */
+      --accent-soft: rgba(214, 158, 46, 0.15);
+      --pill: rgba(214, 158, 46, 0.12);
+      --badge: rgba(214, 158, 46, 0.18);
+      --badge-text: #f3eddc;
       --radius: 14px;
       --radius-sm: 10px;
       --control-h: 42px;
-      --font: "Inter", system-ui, -apple-system, sans-serif;
+      --font: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
     }
 
     * { box-sizing: border-box; }
@@ -35,6 +37,20 @@
       color: var(--text);
       background: var(--bg);
       -webkit-font-smoothing: antialiased;
+      position: relative;
+    }
+
+    /* Subtle grain/noise overlay using CSS only */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(0deg, rgba(255, 255, 255, 0.02), rgba(0, 0, 0, 0.02)),
+        repeating-linear-gradient(90deg, rgba(0,0,0,0.05) 0px, rgba(0,0,0,0.05) 1px, transparent 1px, transparent 2px);
+      mix-blend-mode: overlay;
+      opacity: 0.35;
     }
 
     .shell {
@@ -52,6 +68,8 @@
       border: 1px solid var(--border);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
+      backdrop-filter: saturate(110%) blur(8px);
+      -webkit-backdrop-filter: saturate(110%) blur(8px);
       margin-bottom: 16px;
     }
 
@@ -60,13 +78,14 @@
       height: 40px;
       border-radius: 10px;
       border: 1px solid var(--border);
-      background: #f5f7fb;
+      background: rgba(214, 158, 46, 0.12);
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      color: var(--muted);
+      color: var(--badge-text);
       font-weight: 700;
       font-size: 14px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
     }
 
     .titles h1 {
@@ -89,6 +108,7 @@
       font-size: 13px;
       font-weight: 600;
       letter-spacing: 0.01em;
+      border: 1px solid var(--border);
     }
 
     .card {
@@ -98,19 +118,23 @@
       box-shadow: var(--shadow);
       padding: 14px 16px 10px;
       margin-bottom: 16px;
+      backdrop-filter: saturate(110%) blur(10px);
+      -webkit-backdrop-filter: saturate(110%) blur(10px);
     }
 
     .controls {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      display: flex;
+      flex-wrap: nowrap;
+      align-items: flex-end;
       gap: 12px;
-      align-items: center;
     }
 
     .control-group {
-      display: flex;
+      display: inline-flex;
       flex-direction: column;
       gap: 6px;
+      min-width: unset;
+      width: auto;
     }
 
     .control-label {
@@ -126,39 +150,96 @@
       padding: 0 14px;
       border-radius: var(--radius-sm);
       border: 1px solid var(--border);
-      background: #fff;
+      background: rgba(20, 18, 16, 0.65);
       color: var(--text);
       font-size: 15px;
       font-weight: 600;
       outline: none;
-      transition: border-color 0.15s ease, box-shadow 0.15s ease;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='none' stroke='%236b7280' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 5l3 3 3-3'/%3E%3C/svg%3E");
+      transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='none' stroke='%23b3a89b' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 5l3 3 3-3'/%3E%3C/svg%3E");
       background-repeat: no-repeat;
       background-position: right 12px center;
       background-size: 14px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
     }
+
+    /* Compact widths for top controls */
+    #keySelect { width: 6ch; min-width: 80px; }
+    #scaleSelect { min-width: 240px; }
+
+    /* Keep checkbox labels on one line */
+    .control-group label { white-space: nowrap; }
+
+    /* Inputs, buttons, and segmented theme */
+    input[type="checkbox"] {
+      width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent);
+    }
+
+    /* Default button style (unused for audio icon button) */
+    button {
+      height: 32px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: rgba(214, 158, 46, 0.18);
+      color: var(--badge-text);
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 13px;
+      transition: background 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+    }
+    button:hover { background: rgba(214, 158, 46, 0.26); }
+    button:focus { outline: none; box-shadow: 0 0 0 3px var(--accent-soft); border-color: var(--accent); }
+
+    /* Audio icon button: icon-only, no border/background */
+    .section-header button {
+      height: auto;
+      padding: 0 6px;
+      border: none;
+      background: transparent;
+      color: #0f172a;
+      font-weight: 700;
+      font-size: 16px;
+      line-height: 1;
+      box-shadow: none;
+      transition: color 0.2s ease;
+    }
+    .section-header button:hover { background: transparent; }
+    .section-header button:focus { outline: none; box-shadow: none; }
+
+    .segmented {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(20, 18, 16, 0.45);
+      position: relative;
+      overflow: hidden;
+    }
+    .segmented .pill {
+      position: absolute;
+      top: 4px;
+      bottom: 4px;
+      left: 6px;
+      width: calc(50% - 8px);
+      border-radius: 999px;
+      background: rgba(214, 158, 46, 0.18);
+      transition: transform 0.2s ease;
+      z-index: 1;
+    }
+    .segmented[data-active="standard"] .pill { transform: translateX(100%); }
+    .segmented label { position: relative; z-index: 2; color: var(--badge-text); font-weight: 600; }
+    .segmented input[type="radio"] { display: none; }
 
     select:focus {
       border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+      box-shadow: 0 0 0 3px var(--accent-soft);
     }
 
-   /* Make the pill position relative to the segmented control, not the page */
-.segmented {
-  position: relative; /* <-- add this */
-  overflow: hidden;   /* <-- add this to prevent any bleed */
-}
-
-/* Ensure labels sit above the pill */
-.segmented label {
-  position: relative; /* <-- add this */
-  z-index: 2;         /* <-- add this */
-}
-
-/* Keep pill behind labels */
-.segmented .pill {
-  z-index: 1;         /* (you already set z-index:0, set it to 1 or keep 0, either is fine) */
-}
+    /* Remove dev notes — styles consolidated above */
 
     .helper {
       margin-top: 6px;
@@ -169,13 +250,14 @@
     #output { margin-top: 10px; }
 
     .section {
-      background: var(--card);
+      background: #ffffff;
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
       box-shadow: var(--shadow);
       padding: 12px 14px 10px;
       margin-bottom: 14px;
     }
+    .section, .section * { color: #0f172a; }
 
     .section-header {
       display: flex;
@@ -197,9 +279,43 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      color: var(--muted);
+      color: var(--badge-text);
       font-size: 14px;
       cursor: default;
+    }
+
+    /* Range slider theme to match lounge colors */
+    .section-header input[type="range"] {
+      accent-color: var(--accent);
+    }
+    /* WebKit track/thumb */
+    .section-header input[type="range"]::-webkit-slider-runnable-track {
+      height: 6px;
+      background: rgba(214, 158, 46, 0.18);
+      border-radius: 999px;
+      border: 1px solid var(--border);
+    }
+    .section-header input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 14px; height: 14px;
+      background: var(--accent);
+      border-radius: 50%;
+      border: 1px solid rgba(0,0,0,0.25);
+      margin-top: -4px; /* center on track */
+    }
+    /* Firefox */
+    .section-header input[type="range"]::-moz-range-track {
+      height: 6px;
+      background: rgba(214, 158, 46, 0.18);
+      border-radius: 999px;
+      border: 1px solid var(--border);
+    }
+    .section-header input[type="range"]::-moz-range-thumb {
+      width: 14px; height: 14px;
+      background: var(--accent);
+      border-radius: 50%;
+      border: 1px solid rgba(0,0,0,0.25);
     }
 
     .section-body {
@@ -208,12 +324,15 @@
     .section-body svg {
       min-width: 820px;
       display: block;
+      filter: drop-shadow(0 1px 0 rgba(255,255,255,0.04));
     }
 
     @media (max-width: 640px) {
       header { flex-wrap: wrap; }
       .badge { width: 100%; text-align: center; margin-left: 0; }
-      .controls { grid-template-columns: 1fr; }
+      .controls { flex-wrap: wrap; }
+      .control-group { width: 100%; }
+      #keySelect, #scaleSelect { width: 100%; min-width: 0; }
       .segmented { width: 100%; justify-content: space-between; }
     }
   </style>

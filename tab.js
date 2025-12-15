@@ -623,8 +623,8 @@ function renderSection(parent, title, notesData, mode) {
   controls.style.cssText = "display: flex; gap: 12px; align-items: center; margin-left: auto;";
 
   const playBtn = document.createElement("button");
-  playBtn.textContent = "▶ Play";
-  playBtn.style.cssText = "padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border); background: #2563eb; color: white; font-weight: 600; cursor: pointer; font-size: 12px; transition: background 0.2s ease;";
+  playBtn.textContent = "▶";
+  playBtn.style.cssText = "padding: 0 6px; border: none; background: transparent; color: #0f172a; font-weight: 700; cursor: pointer; font-size: 16px; line-height: 1; transition: color 0.2s ease;";
 
   const bpmLabel = document.createElement("label");
   bpmLabel.style.cssText = "display: flex; gap: 6px; align-items: center; font-size: 12px; color: var(--muted); white-space: nowrap;";
@@ -649,15 +649,19 @@ function renderSection(parent, title, notesData, mode) {
   bpmLabel.appendChild(bpmValue);
 
   playBtn.addEventListener("click", () => {
-    if (playBtn.textContent === "⏸ Stop") {
+    if (playBtn.textContent === "⏸") {
       AudioEngine.stopPlayback();
-      playBtn.textContent = "▶ Play";
-      playBtn.style.background = "#2563eb";
+      playBtn.textContent = "▶";
+      playBtn.style.background = "transparent";
+      playBtn.style.border = "none";
+      playBtn.style.color = "#0f172a";
     } else {
       const bpm = parseInt(bpmInput.value, 10);
       AudioEngine.playSequence(notesData, bpm, playBtn);
-      playBtn.textContent = "⏸ Stop";
-      playBtn.style.background = "#ef4444";
+      playBtn.textContent = "⏸";
+      playBtn.style.background = "transparent";
+      playBtn.style.border = "none";
+      playBtn.style.color = "#0f172a";
     }
   });
 
