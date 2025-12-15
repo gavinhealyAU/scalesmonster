@@ -753,6 +753,11 @@ window.addEventListener("DOMContentLoaded", () => {
   const modeSwitch = document.getElementById("modeSwitch");
   const rootToggle = document.getElementById("rootToggle");
   const noteNameToggle = document.getElementById("noteNameToggle");
+  const SCROLL_Y = 40;
+  const LOGO_SHRINK_DISTANCE = 240;
+  const LOGO_MIN_SCALE_DESKTOP = 0.6;
+  const LOGO_MIN_SCALE_MOBILE = 0.65;
+  const rootStyle = document.documentElement.style;
 
   renderApp();
 
@@ -771,4 +776,18 @@ window.addEventListener("DOMContentLoaded", () => {
   }
   if (rootToggle) rootToggle.addEventListener("change", renderApp);
   if (noteNameToggle) noteNameToggle.addEventListener("change", renderApp);
+
+  function applyLogoScale() {
+    const y = window.scrollY;
+    const minScale = window.matchMedia("(max-width: 640px)").matches ? LOGO_MIN_SCALE_MOBILE : LOGO_MIN_SCALE_DESKTOP;
+    const clamped = Math.max(0, Math.min(LOGO_SHRINK_DISTANCE, y));
+    const t = clamped / LOGO_SHRINK_DISTANCE;
+    const scale = 1 - (1 - minScale) * t; // linear falloff from 1 -> minScale
+
+    rootStyle.setProperty("--logo-scale", scale.toFixed(3));
+    document.body.classList.toggle("is-scrolled", y > SCROLL_Y);
+  }
+
+  applyLogoScale();
+  window.addEventListener("scroll", applyLogoScale, { passive: true });
 });
