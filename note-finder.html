@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Note Finder - Guitar Scales</title>
+
+  <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="./favicon-16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png" />
+
+  <script defer src="https://unpkg.com/vexflow@4.2.3/build/cjs/vexflow.js"></script>
+  <script defer src="./note-finder.js"></script>
+
+  <style>
+    :root {
+      /* Lounge theme tokens */
+      --bg: radial-gradient(1200px 700px at 20% 10%, rgba(22, 19, 16, 0.9) 0%, rgba(18, 16, 14, 0.95) 40%, rgba(12, 11, 10, 1) 100%),
+             linear-gradient(180deg, rgba(30, 27, 24, 0.6) 0%, rgba(17, 16, 15, 0.8) 100%);
+      --card: rgba(40, 36, 32, 0.55);
+      --border: rgba(255, 199, 125, 0.18);
+      --shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+      --text: #e6e1db;
+      --muted: #b3a89b;
+      --accent: #d69e2e;
+      --accent-soft: rgba(214, 158, 46, 0.15);
+      --pill: rgba(214, 158, 46, 0.12);
+      --badge: rgba(214, 158, 46, 0.18);
+      --badge-text: #f3eddc;
+      --radius: 14px;
+      --radius-sm: 10px;
+      --control-h: 42px;
+      --logo-base-size: 200px;
+      --logo-scale: 1;
+      --font: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: var(--font);
+      color: var(--text);
+      background: var(--bg);
+      -webkit-font-smoothing: antialiased;
+      position: relative;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(0deg, rgba(255, 255, 255, 0.02), rgba(0, 0, 0, 0.02)),
+        repeating-linear-gradient(90deg, rgba(0,0,0,0.05) 0px, rgba(0,0,0,0.05) 1px, transparent 1px, transparent 2px);
+      mix-blend-mode: overlay;
+      opacity: 0.35;
+    }
+
+    .shell {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 18px 18px 40px;
+    }
+
+    .floating-logo {
+      position: fixed;
+      bottom: 14px;
+      right: 14px;
+      z-index: 50;
+      border: none;
+      border-radius: 14px;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      box-shadow: none;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      transition: padding 220ms ease;
+    }
+    .floating-logo img {
+      width: calc(var(--logo-base-size) * var(--logo-scale));
+      height: calc(var(--logo-base-size) * var(--logo-scale));
+      object-fit: contain;
+      opacity: 0.8;
+      transition: width 220ms ease, height 220ms ease, opacity 160ms ease;
+    }
+    body.is-scrolled .floating-logo { padding: 10px; }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px 16px 10px;
+      margin-bottom: 16px;
+      backdrop-filter: saturate(110%) blur(10px);
+      -webkit-backdrop-filter: saturate(110%) blur(10px);
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .control-group {
+      display: inline-flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 8px;
+      min-width: unset;
+      width: auto;
+    }
+
+    .control-label {
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 600;
+      white-space: nowrap;
+      margin: 0;
+    }
+
+    .mode-switch {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0;
+      height: var(--control-h);
+      min-width: 220px;
+      padding: 4px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(20, 18, 16, 0.45);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+    }
+    .mode-btn {
+      position: relative;
+      z-index: 2;
+      flex: 1 1 50%;
+      height: 100%;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      font-weight: 700;
+      font-size: 14px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: color 0.2s ease;
+    }
+    .mode-switch[data-mode="tab"] .mode-btn[data-mode="tab"],
+    .mode-switch[data-mode="standard"] .mode-btn[data-mode="standard"] {
+      color: var(--text);
+    }
+    .mode-thumb {
+      position: absolute;
+      z-index: 1;
+      top: 4px;
+      bottom: 4px;
+      left: 4px;
+      width: calc(50% - 4px);
+      border-radius: 999px;
+      background: var(--pill);
+      border: 1px solid var(--border);
+      transition: transform 0.2s ease;
+    }
+    .mode-switch[data-mode="standard"] .mode-thumb { transform: translateX(100%); }
+
+    .icon-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: auto;
+      height: auto;
+      padding: 0;
+      border: none;
+      background: transparent;
+      color: var(--text);
+      cursor: pointer;
+      transition: color 0.2s ease, opacity 0.2s ease;
+    }
+    .icon-btn:hover { opacity: 0.7; }
+    .icon-btn:focus { outline: none; }
+
+    .note-panel {
+      background: rgba(20, 18, 16, 0.65);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 16px 20px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .note-display {
+      flex: 1;
+    }
+
+    .note-name {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--accent);
+      margin: 0;
+    }
+
+    .note-info {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .play-controls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .play-btn {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: 2px solid var(--accent);
+      background: var(--pill);
+      color: var(--accent);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      transition: background 0.2s ease, transform 0.1s ease;
+    }
+    .play-btn:hover { background: var(--accent-soft); }
+    .play-btn:active { transform: scale(0.95); }
+    .play-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    .output-container {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow);
+      padding: 20px;
+      min-height: 400px;
+      display: flex;
+      align-items: stretch;
+      justify-content: flex-start;
+    }
+
+    .print-header {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #0f172a;
+    }
+    .print-logo { width: 60px; height: 60px; object-fit: contain; }
+    .print-title { font-size: 24px; font-weight: 700; color: #0f172a; }
+
+    .site-footer {
+      margin-top: 40px;
+      padding: 18px 16px 22px;
+      border-top: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .footer-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .footer-left { display: flex; flex-direction: column; gap: 2px; }
+    .footer-left strong { color: var(--text); font-weight: 700; letter-spacing: 0.02em; }
+    .footer-left span { font-size: 12px; color: var(--muted); }
+
+    .footer-right { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+    .footer-right .divider { opacity: 0.5; }
+
+/* Make the fretboard large enough to actually see */
+#fretboardMount svg {
+  width: 100%;
+  height: clamp(220px, 30vw, 360px);
+  display: block;
+}
+
+/* Optional: center it and prevent it shrinking too far */
+#fretboardMount {
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+    @media (max-width: 640px) {
+      .controls { flex-wrap: wrap; }
+      .control-group { width: 100%; }
+      .mode-switch { width: 100%; min-width: 0; }
+      .note-panel { flex-direction: column; text-align: center; }
+    }
+
+    @media print {
+      body {
+        background: white !important;
+        color: #0f172a !important;
+        margin: 0;
+        padding: 0;
+      }
+      body::before { display: none; }
+      .shell { padding: 20px; max-width: 100%; }
+      .card, .floating-logo, .note-panel, .icon-btn { display: none !important; }
+      .print-header { display: flex !important; }
+    .output-container {
+  align-items: stretch;
+  justify-content: flex-start;
+}
+      .site-footer {
+        border-top: none;
+        padding-top: 12px;
+        color: #000;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <a class="floating-logo" href="index.html" aria-label="Back to Scales">
+    <img src="./logo.png" alt="Guitar Scales World logo" />
+  </a>
+
+  <div class="shell">
+
+    <div class="card">
+      <div class="controls">
+        <div class="control-group">
+          <div class="mode-switch" id="modeSwitch" data-mode="tab">
+            <button type="button" class="mode-btn" data-mode="tab">TAB</button>
+            <button type="button" class="mode-btn" data-mode="standard">Standard</button>
+            <div class="mode-thumb"></div>
+          </div>
+        </div>
+
+        <button id="printBtn" class="icon-btn" aria-label="Print" style="margin-left: auto;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="print-header" id="printHeader">
+      <img src="./logo.png" alt="Logo" class="print-logo" />
+      <div class="print-title" id="printTitle">Note Finder</div>
+    </div>
+
+    <div class="note-panel">
+      <div class="note-display">
+        <div class="note-name" id="noteName">Click a note</div>
+        <div class="note-info" id="noteInfo">Tap any fret or staff position</div>
+      </div>
+      <div class="play-controls">
+        <button class="play-btn" id="playBtn" disabled>▶</button>
+      </div>
+    </div>
+
+    <div class="output-container">
+      <div id="fretboardMount"></div>
+      <div id="staffMount" style="display: none;"></div>
+    </div>
+
+  </div>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-left">
+        <strong>Guitar Scales World</strong>
+        <span>Practice. Precision. Flow.</span>
+      </div>
+
+      <div class="footer-right">
+        <span>© <span id="year"></span> guitarscales.world</span>
+        <span class="divider">•</span>
+        <span>Built for guitarists</span>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
