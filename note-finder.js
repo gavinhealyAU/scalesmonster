@@ -20,7 +20,7 @@ const {
 const PC_NAMES_SHARP = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
 let currentMidi = null;
-let lastClickedStringIdx = 5; // default to low E (idx 5) so display starts at 6
+let lastClickedStringIdx = 5; // default to low E (idx 5)
 let isPlaying = false;
 
 // One note per string (stringIdx 0..5). Only ACTIVE notes are rendered (green).
@@ -50,14 +50,8 @@ function midiToVexKey(midi) {
   return `${name.toLowerCase()}/${octave}`;
 }
 
-// idx 0..5 (high E..low E) -> display 1..6 (top..bottom)
-function idxToDisplayStringNumberTopDown(stringIdx) {
-  return stringIdx + 1;
-}
-
-// idx 0..5 (high E..low E) -> display 1..6 but bottom should read 6
-// That is already true in the fretboard model (low E idx5 => 6).
-function idxToDisplayStringNumberBottomUp(stringIdx) {
+// idx 0..5 -> display 1..6 (top..bottom)
+function idxToDisplayStringNumber(stringIdx) {
   return stringIdx + 1;
 }
 
@@ -67,15 +61,15 @@ function getChordMidisLowToHigh() {
   return entries.map(([, v]) => v.midi);
 }
 
+// For the small line under the big yellow text (optional)
 function formatChordHeader() {
   if (chordSelections.size === 0) return "";
 
-  // Display bottom-up: 6..1 (idx5..idx0)
   const ordered = Array.from(chordSelections.entries()).sort((a, b) => b[0] - a[0]);
   const parts = [];
 
   for (const [stringIdx, v] of ordered) {
-    const stringNumber = idxToDisplayStringNumberBottomUp(stringIdx); // idx5 => 6, idx0 => 1
+    const stringNumber = idxToDisplayStringNumber(stringIdx);
     parts.push(`${stringNumber}:${v.name}${v.octave} F${v.fret}`);
   }
 
@@ -146,7 +140,7 @@ const AudioEngine = (() => {
 function updatePlayButton(playing) {
   const btn = document.getElementById("playBtn");
   if (!btn) return;
-  btn.textContent = playing ? "&#9208;" : "&#9654;";
+  btn.textContent = playing ? "⏸" : "▶";
 }
 
 function stopPlayback() {
@@ -164,6 +158,21 @@ function startPlayback() {
   updatePlayButton(true);
 }
 
+function buildAllStringDisplayHTML() {
+  // Always show all 6 strings (1..6).
+  // If a string has no selected note, show X.
+  const lines = [];
+  for (let stringIdx = 0; stringIdx < 6; stringIdx++) {
+    const displayNum = idxToDisplayStringNumber(stringIdx);
+    const v = chordSelections.get(stringIdx);
+    const noteText = v ? v.name : "X";
+    lines.push(
+      `<div class="string-line"><span class="string-num">${displayNum}</span><span class="note-text">${noteText}</span></div>`
+    );
+  }
+  return lines.join("");
+}
+
 function clearNoteDisplay() {
   currentMidi = null;
 
@@ -171,10 +180,8 @@ function clearNoteDisplay() {
   const infoEl = document.getElementById("noteInfo");
   const playBtn = document.getElementById("playBtn");
 
-  if (nameEl) {
-    nameEl.innerHTML = `<span class="string-num">6</span><span class="note-text">Click</span>`;
-  }
-  if (infoEl) infoEl.textContent = "Tap any fret";
+  if (nameEl) nameEl.innerHTML = buildAllStringDisplayHTML();
+  if (infoEl) infoEl.textContent = "";
   if (playBtn) playBtn.disabled = true;
 
   stopPlayback();
@@ -183,19 +190,17 @@ function clearNoteDisplay() {
 function updateNoteDisplay(midi) {
   currentMidi = midi;
 
-  const { name, octave } = noteNameFromMidi(midi);
+  const { octave } = noteNameFromMidi(midi);
+
   const nameEl = document.getElementById("noteName");
   const infoEl = document.getElementById("noteInfo");
   const playBtn = document.getElementById("playBtn");
 
-  const stringNumber = idxToDisplayStringNumberBottomUp(lastClickedStringIdx);
+  if (nameEl) nameEl.innerHTML = buildAllStringDisplayHTML();
 
-  if (nameEl) {
-    nameEl.innerHTML = `<span class="string-num">${stringNumber}</span><span class="note-text">${name}</span>`;
-  }
-
-  const chordText = formatChordHeader();
+  // Keep this minimal. If you truly want ONLY the big yellow text, hide #noteInfo in CSS.
   if (infoEl) {
+    const chordText = formatChordHeader();
     const base = `MIDI ${midi} (Octave ${octave})`;
     infoEl.textContent = chordText ? `${base}  |  ${chordText}` : base;
   }
@@ -210,13 +215,21 @@ function updateNoteDisplay(midi) {
 function ensureNotationMounts() {
   const outputContainer = document.querySelector(".output-container") || document.body;
 
+  // Make things tight: fretboard then tab then staff
   outputContainer.style.display = "flex";
   outputContainer.style.flexDirection = "column";
   outputContainer.style.alignItems = "stretch";
-  outputContainer.style.gap = "4px";
+  outputContainer.style.gap = "2px";
   outputContainer.style.minHeight = "unset";
-  outputContainer.style.paddingTop = "12px";
-  outputContainer.style.paddingBottom = "12px";
+  outputContainer.style.paddingTop = "10px";
+  outputContainer.style.paddingBottom = "10px";
+
+  // Ensure fretboard stays first
+  const fretMount = document.getElementById("fretboardMount");
+  if (fretMount) {
+    fretMount.style.margin = "0";
+    fretMount.style.padding = "0";
+  }
 
   let notationWrap = document.getElementById("notationWrap");
   if (!notationWrap) {
@@ -225,12 +238,12 @@ function ensureNotationMounts() {
     notationWrap.style.display = "flex";
     notationWrap.style.flexDirection = "column";
     notationWrap.style.alignItems = "stretch";
-    notationWrap.style.gap = "6px";
+    notationWrap.style.gap = "2px";
     notationWrap.style.width = "100%";
     notationWrap.style.margin = "0";
     outputContainer.appendChild(notationWrap);
   } else {
-    notationWrap.style.gap = "6px";
+    notationWrap.style.gap = "2px";
     notationWrap.style.margin = "0";
   }
 
@@ -271,8 +284,8 @@ function renderTab(tabMount) {
 
   const width = 980;
 
-  // Ensure bottom string is never clipped
-  const height = 190;
+  // Extra height to prevent clipping of bottom string and X glyph
+  const height = 210;
 
   const renderer = new Renderer(tabMount, Renderer.Backends.SVG);
   renderer.resize(width, height);
@@ -288,8 +301,8 @@ function renderTab(tabMount) {
     svg.style.margin = "0";
   }
 
-  // Stave higher so the bottom line has padding
-  const stave = new TabStave(20, 10, width - 40);
+  // Put stave higher and leave padding underneath
+  const stave = new TabStave(20, 12, width - 40);
   stave.setContext(ctx).draw();
 
   // All 6 strings: missing string shows X
@@ -348,6 +361,10 @@ function renderStandard(staffMount) {
   const left = new StaveConnector(treble, bass);
   left.setType(StaveConnector.type.SINGLE_LEFT);
   left.setContext(ctx).draw();
+
+  const right = new StaveConnector(treble, bass);
+  right.setType(StaveConnector.type.SINGLE_RIGHT);
+  right.setContext(ctx).draw();
 
   const selected = Array.from(chordSelections.entries()).sort((a, b) => b[0] - a[0]);
   if (selected.length === 0) return;
@@ -420,8 +437,6 @@ function renderFretboard() {
   svg.style.display = "block";
   svg.style.margin = "0";
   svg.style.padding = "0";
-
-  // Override the CSS clamp so it does not leave extra space below
   svg.style.height = "260px";
 
   const bg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
@@ -456,6 +471,7 @@ function renderFretboard() {
     return xStart + (fret - 0.5) * fretSpacing;
   }
 
+  // Frets
   for (let f = 0; f <= fretCount; f++) {
     const x = xStart + f * fretSpacing;
     const fretLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
@@ -468,6 +484,7 @@ function renderFretboard() {
     gBoard.appendChild(fretLine);
   }
 
+  // Strings + labels
   const stringStrokeWidths = [2, 2.5, 3, 3.5, 4, 4.5];
 
   for (let i = 0; i < stringsTopToBottom.length; i++) {
@@ -519,6 +536,7 @@ function renderFretboard() {
     gBoard.appendChild(labelGroup);
   }
 
+  // Inlays
   const markerFretsSingle = [3, 5, 7, 9, 15, 17, 19, 21];
   const markerFretsDouble = [12, 24];
 
@@ -548,6 +566,7 @@ function renderFretboard() {
     }
   }
 
+  // Active chord dots
   const gChordDots = document.createElementNS("http://www.w3.org/2000/svg", "g");
   svg.appendChild(gChordDots);
 
@@ -634,6 +653,7 @@ function renderFretboard() {
     toggleChordSelection(sIdx, fret, stringsTopToBottom[sIdx].openMidi);
   });
 
+  // Fret numbers
   const fretLabelY = yEnd + 28;
 
   {
@@ -667,7 +687,7 @@ function renderFretboard() {
   mount.appendChild(svg);
   renderChordDots();
 
-  // Initial display
+  // Initial display: build the all-string display immediately
   updateNoteDisplay(stringsTopToBottom[5].openMidi);
   renderTabAndStandard();
 }
