@@ -9,6 +9,9 @@ if (!VF) {
   throw new Error("VexFlow UMD not available. Ensure vexflow.js loads before tab.js.");
 }
 
+// Global state for root note toggle
+let showRootNotes = true;
+
 const {
   Formatter,
   Renderer,
@@ -345,7 +348,12 @@ function renderTab(containerEl, notesData) {
       positions: [{ str: n.string, fret: n.fret }],
       duration: "q"
     });
-    tn._isRoot = !!n.isRoot;
+    if (showRootNotes && n.isRoot) {
+      tn.setStyle({
+        fillStyle: "#dc2626",
+        strokeStyle: "#dc2626"
+      });
+    }
     return tn;
   });
 
@@ -354,14 +362,6 @@ function renderTab(containerEl, notesData) {
 
   new Formatter().joinVoices([voice]).format([voice], 800);
   voice.draw(ctx, stave);
-
-  const svg = containerEl.querySelector("svg");
-  if (svg) {
-    const groups = svg.querySelectorAll(".vf-note");
-    groups.forEach((g, i) => {
-      if (tabNotes[i] && tabNotes[i]._isRoot) g.classList.add("vf-root-note");
-    });
-  }
 }
 
 function renderGrandStaff(containerEl, notesData) {
@@ -400,7 +400,12 @@ function renderGrandStaff(containerEl, notesData) {
     if (midi >= 60) {
       const t = new StaveNote({ keys: [key], duration: "q", clef: "treble" });
       addAccidentalsIfNeeded(t);
-      t._isRoot = !!n.isRoot;
+      if (showRootNotes && n.isRoot) {
+        t.setStyle({
+          fillStyle: "#dc2626",
+          strokeStyle: "#dc2626"
+        });
+      }
 
       trebleNotes.push(t);
       bassNotes.push(new StaveNote({ keys: ["b/3"], duration: "qr", clef: "bass" }));
@@ -409,7 +414,12 @@ function renderGrandStaff(containerEl, notesData) {
 
       const b = new StaveNote({ keys: [key], duration: "q", clef: "bass" });
       addAccidentalsIfNeeded(b);
-      b._isRoot = !!n.isRoot;
+      if (showRootNotes && n.isRoot) {
+        b.setStyle({
+          fillStyle: "#dc2626",
+          strokeStyle: "#dc2626"
+        });
+      }
 
       bassNotes.push(b);
     }
@@ -421,18 +431,136 @@ function renderGrandStaff(containerEl, notesData) {
   new Formatter().format([vT, vB], 800);
   vT.draw(ctx, treble);
   vB.draw(ctx, bass);
+}
 
-  const svg = containerEl.querySelector("svg");
-  if (svg) {
-    const groups = svg.querySelectorAll(".vf-note");
-    const total = trebleNotes.length + bassNotes.length;
-    const limit = Math.min(groups.length, total);
-    for (let i = 0; i < limit; i++) {
-      const isRoot = i < trebleNotes.length ? !!trebleNotes[i]._isRoot : !!bassNotes[i - trebleNotes.length]._isRoot;
-      if (isRoot) groups[i].classList.add("vf-root-note");
+// ===========================
+// Audio Engine
+// ===========================
+
+const AudioEngine = (() => {
+  let audioCtx = null;
+  let isPlaying = false;
+  let currentOscillators = [];
+  let currentGains = [];
+  let playbackTimer = null;
+  let currentSequence = [];
+  let currentIndex = 0;
+  let bpm = 120;
+  let currentPlayingButton = null;
+
+  function ensureAudioContext() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    return audioCtx;
+  }
+
+  function midiToFrequency(midi) {
+    return 440 * Math.pow(2, (midi - 69) / 12);
+  }
+
+  function noteOffAll() {
+    currentOscillators.forEach(osc => {
+      if (osc) {
+        try { osc.stop(); } catch (e) {}
+      }
+    });
+    currentGains.forEach(gain => {
+      if (gain) {
+        try { gain.gain.cancelScheduledValues(audioCtx.currentTime); } catch (e) {}
+      }
+    });
+    currentOscillators = [];
+    currentGains = [];
+  }
+
+  function playNote(midi, durationMs) {
+    const ctx = ensureAudioContext();
+    const freq = midiToFrequency(midi);
+    const now = ctx.currentTime;
+    const duration = durationMs / 1000;
+    const attackTime = 0.01;
+    const releaseTime = 0.05;
+
+    const osc = ctx.createOscillator();
+    osc.type = "sine";
+    osc.frequency.value = freq;
+
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(0.3, now + attackTime);
+    gain.gain.setValueAtTime(0.3, now + Math.max(attackTime, duration - releaseTime));
+    gain.gain.linearRampToValueAtTime(0, now + duration);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + duration);
+
+    currentOscillators.push(osc);
+    currentGains.push(gain);
+  }
+
+  function resetPreviousButton() {
+    if (currentPlayingButton) {
+      currentPlayingButton.textContent = "▶ Play";
+      currentPlayingButton.style.background = "#2563eb";
+      currentPlayingButton = null;
     }
   }
-}
+
+  function playSequence(notesData, newBpm, playButton) {
+    if (isPlaying) {
+      stopPlayback();
+    }
+
+    if (!Array.isArray(notesData) || notesData.length === 0) {
+      console.error("Invalid notes data for playback");
+      return;
+    }
+
+    bpm = Math.max(40, Math.min(200, newBpm || 120));
+    currentSequence = notesData;
+    currentIndex = 0;
+    isPlaying = true;
+    currentPlayingButton = playButton;
+
+    const beatDurationMs = (60000 / bpm);
+
+    function scheduleNextNote() {
+      if (!isPlaying) return;
+
+      const note = currentSequence[currentIndex];
+      const midi = STRING_OPEN_MIDI[note.string] + note.fret;
+      playNote(midi, beatDurationMs * 0.8);
+
+      currentIndex = (currentIndex + 1) % currentSequence.length;
+      playbackTimer = setTimeout(scheduleNextNote, beatDurationMs);
+    }
+
+    scheduleNextNote();
+  }
+
+  function stopPlayback() {
+    isPlaying = false;
+    if (playbackTimer) {
+      clearTimeout(playbackTimer);
+      playbackTimer = null;
+    }
+    noteOffAll();
+    resetPreviousButton();
+  }
+
+  function getIsPlaying() {
+    return isPlaying;
+  }
+
+  return {
+    playSequence,
+    stopPlayback,
+    getIsPlaying,
+  };
+})();
 
 function renderSection(parent, title, notesData, mode) {
   const section = document.createElement("div");
@@ -443,10 +571,53 @@ function renderSection(parent, title, notesData, mode) {
   const label = document.createElement("div");
   label.textContent = title;
   header.appendChild(label);
-  const copy = document.createElement("div");
-  copy.className = "copy-btn";
-  copy.textContent = "⧉";
-  header.appendChild(copy);
+
+  // Audio playback controls (in header, right-aligned)
+  const controls = document.createElement("div");
+  controls.style.cssText = "display: flex; gap: 12px; align-items: center; margin-left: auto;";
+
+  const playBtn = document.createElement("button");
+  playBtn.textContent = "▶ Play";
+  playBtn.style.cssText = "padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border); background: #2563eb; color: white; font-weight: 600; cursor: pointer; font-size: 12px; transition: background 0.2s ease;";
+
+  const bpmLabel = document.createElement("label");
+  bpmLabel.style.cssText = "display: flex; gap: 6px; align-items: center; font-size: 12px; color: var(--muted); white-space: nowrap;";
+  const bpmText = document.createElement("span");
+  bpmText.textContent = "BPM:";
+  const bpmInput = document.createElement("input");
+  bpmInput.type = "range";
+  bpmInput.min = "40";
+  bpmInput.max = "200";
+  bpmInput.value = "120";
+  bpmInput.style.cssText = "width: 90px; cursor: pointer;";
+  const bpmValue = document.createElement("span");
+  bpmValue.textContent = "120";
+  bpmValue.style.cssText = "min-width: 30px; text-align: right; font-weight: 600;";
+
+  bpmInput.addEventListener("input", (e) => {
+    bpmValue.textContent = e.target.value;
+  });
+
+  bpmLabel.appendChild(bpmText);
+  bpmLabel.appendChild(bpmInput);
+  bpmLabel.appendChild(bpmValue);
+
+  playBtn.addEventListener("click", () => {
+    if (playBtn.textContent === "⏸ Stop") {
+      AudioEngine.stopPlayback();
+      playBtn.textContent = "▶ Play";
+      playBtn.style.background = "#2563eb";
+    } else {
+      const bpm = parseInt(bpmInput.value, 10);
+      AudioEngine.playSequence(notesData, bpm, playBtn);
+      playBtn.textContent = "⏸ Stop";
+      playBtn.style.background = "#ef4444";
+    }
+  });
+
+  controls.appendChild(playBtn);
+  controls.appendChild(bpmLabel);
+  header.appendChild(controls);
   section.appendChild(header);
 
   const body = document.createElement("div");
@@ -471,9 +642,14 @@ function renderApp() {
   const scaleSelect = document.getElementById("scaleSelect");
   const output = document.getElementById("output");
   const modeInput = Array.from(document.querySelectorAll('input[name="mode"]')).find(r => r.checked);
+  const rootToggle = document.getElementById("rootToggle");
 
   if (!keySelect || !scaleSelect || !output) {
     throw new Error("Missing required elements: keySelect, scaleSelect, output.");
+  }
+
+  if (rootToggle) {
+    showRootNotes = rootToggle.checked;
   }
 
   const key = keySelect.value;
@@ -522,10 +698,12 @@ window.addEventListener("DOMContentLoaded", () => {
   const keySelect = document.getElementById("keySelect");
   const scaleSelect = document.getElementById("scaleSelect");
   const modeRadios = document.querySelectorAll('input[name="mode"]');
+  const rootToggle = document.getElementById("rootToggle");
 
   renderApp();
 
   if (keySelect) keySelect.addEventListener("change", renderApp);
   if (scaleSelect) scaleSelect.addEventListener("change", renderApp);
   if (modeRadios && modeRadios.length) modeRadios.forEach(r => r.addEventListener("change", renderApp));
+  if (rootToggle) rootToggle.addEventListener("change", renderApp);
 });
