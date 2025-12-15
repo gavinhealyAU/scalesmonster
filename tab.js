@@ -275,47 +275,58 @@ function fretsForStringPcSet(string, pcSet) {
   return frets;
 }
 
+function build3NPSPositionRun(keyName, scaleName, startFret, span = 6) {
+  const intervals = SCALE_DEFINITIONS[scaleName];
+  if (!intervals) return null;
+
+  const pcSet = buildPcSetForScale(keyName, intervals);
+  const notesAsc = [];
+  let minF = Infinity;
+  let maxF = -Infinity;
+  let lastMidi = -Infinity;
+
+  for (let s = 6; s >= 1; s--) {
+    const candidates = fretsForStringPcSet(s, pcSet)
+      .filter(f => f >= startFret && f <= startFret + span)
+      .map(f => ({ fret: f, midi: STRING_OPEN_MIDI[s] + f }))
+      .sort((a, b) => a.midi - b.midi);
+
+    const chosen = [];
+    for (const c of candidates) {
+      if (c.midi > lastMidi) {
+        chosen.push(c);
+        lastMidi = c.midi;
+        if (chosen.length === 3) break;
+      }
+    }
+
+    if (chosen.length < 3) return null; // cannot supply 3 ascending notes
+
+    chosen.forEach(({ fret, midi }) => {
+      const n = { string: s, fret, isRoot: isRootForKey(s, fret, keyName) };
+      notesAsc.push(n);
+      if (fret < minF) minF = fret;
+      if (fret > maxF) maxF = fret;
+    });
+  }
+
+  const desc = notesAsc.slice(0, -1).reverse();
+  const notesData = [...notesAsc, ...desc];
+  return { notesData, minFret: minF, maxFret: maxF };
+}
+
 function generate3NPSPositionsForScale(keyName, scaleName) {
   const intervals = SCALE_DEFINITIONS[scaleName];
   if (!intervals) return [];
 
-  const pcSet = buildPcSetForScale(keyName, intervals);
-  const stringFrets = {
-    6: fretsForStringPcSet(6, pcSet),
-    5: fretsForStringPcSet(5, pcSet),
-    4: fretsForStringPcSet(4, pcSet),
-    3: fretsForStringPcSet(3, pcSet),
-    2: fretsForStringPcSet(2, pcSet),
-    1: fretsForStringPcSet(1, pcSet),
-  };
-
   const positions = [];
   const base = pickLowERootFret(keyName);
+
   for (let start = Math.max(0, base - 2); start <= 24; start += 2) {
-    let ok = true;
-    const notesAsc = [];
-    let minF = Infinity;
-    let maxF = -Infinity;
-
-    for (let s = 6; s >= 1; s--) {
-      const frets = stringFrets[s].filter(f => f >= start && f <= start + 6);
-      if (frets.length < 3) { ok = false; break; }
-      const chosen = frets.slice(0, 3); // lowest three within window for this string
-      for (const f of chosen) {
-        const n = { string: s, fret: f, isRoot: isRootForKey(s, f, keyName) };
-        notesAsc.push(n);
-        if (f < minF) minF = f;
-        if (f > maxF) maxF = f;
-      }
-    }
-
-    if (ok) {
-      const desc = notesAsc.slice(0, -1).reverse();
-      const notes = [...notesAsc, ...desc];
-      // Avoid duplicates by min/max matching an existing position
-      if (!positions.some(p => p.minFret === minF && p.maxFret === maxF)) {
-        positions.push({ minFret: minF, maxFret: maxF, notesData: notes });
-      }
+    const pos = build3NPSPositionRun(keyName, scaleName, start, 6);
+    if (pos) {
+      const exists = positions.some(p => p.minFret === pos.minFret && p.maxFret === pos.maxFret);
+      if (!exists) positions.push(pos);
     }
   }
 
