@@ -590,7 +590,7 @@ const AudioEngine = (() => {
 
   function resetPreviousButton() {
     if (currentPlayingButton) {
-      currentPlayingButton.textContent = "▶ Play";
+      currentPlayingButton.textContent = "\u25B6 Play";
       currentPlayingButton.style.background = "#2563eb";
       currentPlayingButton = null;
     }
@@ -664,7 +664,7 @@ function renderSection(parent, title, notesData, mode) {
   controls.style.cssText = "display: flex; gap: 12px; align-items: center; margin-left: auto;";
 
   const playBtn = document.createElement("button");
-  playBtn.textContent = "▶";
+  playBtn.textContent = "\u25B6";
   playBtn.style.cssText = "padding: 0 6px; border: none; background: transparent; color: #0f172a; font-weight: 700; cursor: pointer; font-size: 16px; line-height: 1; transition: color 0.2s ease;";
 
   const bpmLabel = document.createElement("label");
@@ -690,16 +690,16 @@ function renderSection(parent, title, notesData, mode) {
   bpmLabel.appendChild(bpmValue);
 
   playBtn.addEventListener("click", () => {
-    if (playBtn.textContent === "⏸") {
+    if (playBtn.textContent === "\u23F8") {
       AudioEngine.stopPlayback();
-      playBtn.textContent = "▶";
+      playBtn.textContent = "\u25B6";
       playBtn.style.background = "transparent";
       playBtn.style.border = "none";
       playBtn.style.color = "#0f172a";
     } else {
       const bpm = parseInt(bpmInput.value, 10);
       AudioEngine.playSequence(notesData, bpm, playBtn);
-      playBtn.textContent = "⏸";
+      playBtn.textContent = "\u23F8";
       playBtn.style.background = "transparent";
       playBtn.style.border = "none";
       playBtn.style.color = "#0f172a";
