@@ -1,4 +1,3 @@
-<!-- index.html -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -23,8 +22,9 @@
       --pill: rgba(214, 158, 46, 0.12);
       --radius: 14px;
       --radius-sm: 10px;
-      --control-h: 42px;
       --font: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+       --logo-base-size: 200px;
+      --logo-scale: 1;  
     }
 
     * { box-sizing: border-box; }
@@ -43,80 +43,6 @@
       padding: 18px 18px 40px;
     }
 
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 14px 16px 10px;
-      margin-bottom: 16px;
-      backdrop-filter: saturate(110%) blur(10px);
-      -webkit-backdrop-filter: saturate(110%) blur(10px);
-    }
-
-    .controls {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .mode-switch {
-      position: relative;
-      display: inline-flex;
-      align-items: center;
-      height: var(--control-h);
-      min-width: 220px;
-      padding: 4px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      background: rgba(20, 18, 16, 0.45);
-    }
-    .mode-btn {
-      position: relative;
-      z-index: 2;
-      flex: 1 1 50%;
-      height: 100%;
-      border: 0;
-      background: transparent;
-      color: var(--muted);
-      font-weight: 700;
-      font-size: 14px;
-      border-radius: 999px;
-      cursor: pointer;
-    }
-    .mode-switch[data-mode="tab"] .mode-btn[data-mode="tab"],
-    .mode-switch[data-mode="standard"] .mode-btn[data-mode="standard"] {
-      color: var(--text);
-    }
-    .mode-thumb {
-      position: absolute;
-      z-index: 1;
-      top: 4px;
-      bottom: 4px;
-      left: 4px;
-      width: calc(50% - 4px);
-      border-radius: 999px;
-      background: var(--pill);
-      border: 1px solid var(--border);
-      transition: transform 0.2s ease;
-    }
-    .mode-switch[data-mode="standard"] .mode-thumb { transform: translateX(100%); }
-
-    .icon-btn {
-      margin-left: auto;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0;
-      border: none;
-      background: transparent;
-      color: var(--text);
-      cursor: pointer;
-      opacity: 0.9;
-    }
-    .icon-btn:hover { opacity: 0.7; }
-
     .note-panel {
       background: rgba(20, 18, 16, 0.65);
       border: 1px solid var(--border);
@@ -129,16 +55,36 @@
     }
 
     .note-display { flex: 1; }
+
     .note-name {
-      font-size: 32px;
-      font-weight: 700;
-      color: var(--accent);
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
       margin: 0;
+      color: var(--accent);
     }
+
+    .note-name .string-num {
+      font-size: 40px;
+      font-weight: 800;
+      line-height: 1;
+      min-width: 28px;
+      text-align: left;
+    }
+
+    .note-name .note-text {
+      font-size: 30px;
+      font-weight: 700;
+      line-height: 1.1;
+    }
+
     .note-info {
       font-size: 13px;
       color: var(--muted);
-      margin-top: 4px;
+      margin-top: 6px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .play-btn {
@@ -175,41 +121,114 @@
       width: 100%;
       height: clamp(240px, 30vw, 380px);
       display: block;
-      touch-action: none; /* important for pointer drag on mobile */
+      touch-action: none;
     }
+
+    /* Floating logo & badge */
+    .floating-logo {
+      position: fixed;
+      bottom: 14px;
+      right: 14px;
+      z-index: 50;
+      border: none;
+      border-radius: 14px;
+      box-shadow: none;
+      padding: 12px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background: transparent;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+    }
+    .floating-logo img {
+      width: calc(var(--logo-base-size) * var(--logo-scale));
+      height: calc(var(--logo-base-size) * var(--logo-scale));
+      object-fit: contain;
+      transition: width 220ms ease, height 220ms ease;
+    }
+
+    body.is-scrolled .floating-logo { padding: 10px; }
+
 
     @media (max-width: 640px) {
       .note-panel { flex-direction: column; text-align: center; }
-      .mode-switch { width: 100%; min-width: 0; }
-      .icon-btn { margin-left: 0; }
+      .note-name { justify-content: center; }
+      .note-info { white-space: normal; }
     }
-  </style>
+   .site-footer {
+  margin-top: 40px;
+  padding: 18px 16px 22px;
+  border-top: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.footer-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.footer-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.footer-left strong {
+  color: var(--text);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.footer-left span {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.footer-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.footer-right .divider {
+  opacity: 0.5;
+}
+
+/* Print mode: footer stays minimal */
+@media print {
+  .site-footer {
+    border-top: none;
+    padding-top: 12px;
+    color: #000;
+  }
+} 
+ 
+ </style>
 </head>
 
 <body>
+    <a class="floating-logo" href="#" aria-label="Guitar Scales World">
+    <img src="./logo.png" alt="Guitar Scales World logo" />
+  </a>
+
+
   <div class="shell">
-    <div class="card">
-      <div class="controls">
-        <div class="mode-switch" id="modeSwitch" data-mode="tab">
-          <button type="button" class="mode-btn" data-mode="tab">TAB</button>
-          <button type="button" class="mode-btn" data-mode="standard">Standard</button>
-          <div class="mode-thumb"></div>
-        </div>
-
-        <button id="printBtn" class="icon-btn" aria-label="Print">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="6 9 6 2 18 2 18 9"></polyline>
-            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-            <rect x="6" y="14" width="12" height="8"></rect>
-          </svg>
-        </button>
-      </div>
-    </div>
-
     <div class="note-panel">
       <div class="note-display">
-        <div class="note-name" id="noteName">Click a note</div>
-        <div class="note-info" id="noteInfo">Tap any fret or staff position</div>
+        <div class="note-name" id="noteName">
+          <span class="string-num">6</span>
+          <span class="note-text">Click</span>
+        </div>
+        <div class="note-info" id="noteInfo">Tap any fret</div>
       </div>
       <button class="play-btn" id="playBtn" disabled>▶</button>
     </div>
@@ -219,5 +238,22 @@
       <div id="staffMount" style="display:none;"></div>
     </div>
   </div>
+
+ <footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-left">
+      <strong>Guitar Scales World</strong>
+      <span>Practice. Precision. Flow.</span>
+    </div>
+
+    <div class="footer-right">
+      <span>&copy; <span id="year"></span> guitarscales.world</span>
+      <span class="divider">•</span>
+      <span>Built for guitarists</span>
+      <span class="divider">•</span>
+      <a href="./index.html" style="color:var(--accent);text-decoration:none;">Check out Scales Map</a>
+    </div>
+  </div>
+</footer>  
 </body>
 </html>
