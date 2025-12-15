@@ -687,11 +687,12 @@ function updateBadge(key, scale) {
   if (badge) badge.textContent = `${key} · ${scale}`;
 }
 
+let currentMode = "tab"; // default
+
 function renderApp() {
   const keySelect = document.getElementById("keySelect");
   const scaleSelect = document.getElementById("scaleSelect");
   const output = document.getElementById("output");
-  const modeInput = Array.from(document.querySelectorAll('input[name="mode"]')).find(r => r.checked);
   const rootToggle = document.getElementById("rootToggle");
   const noteNameToggle = document.getElementById("noteNameToggle");
 
@@ -709,10 +710,7 @@ function renderApp() {
 
   const key = keySelect.value;
   const scale = scaleSelect.value;
-  const mode = modeInput ? modeInput.value : "tab";
-
-  const segmented = document.getElementById("modeSegmented");
-  if (segmented) segmented.setAttribute("data-active", mode === "standard" ? "standard" : "tab");
+  const mode = currentMode;
   updateBadge(key, scale);
 
   output.innerHTML = "";
@@ -752,7 +750,7 @@ function renderApp() {
 window.addEventListener("DOMContentLoaded", () => {
   const keySelect = document.getElementById("keySelect");
   const scaleSelect = document.getElementById("scaleSelect");
-  const modeRadios = document.querySelectorAll('input[name="mode"]');
+  const modeSwitch = document.getElementById("modeSwitch");
   const rootToggle = document.getElementById("rootToggle");
   const noteNameToggle = document.getElementById("noteNameToggle");
 
@@ -760,7 +758,17 @@ window.addEventListener("DOMContentLoaded", () => {
 
   if (keySelect) keySelect.addEventListener("change", renderApp);
   if (scaleSelect) scaleSelect.addEventListener("change", renderApp);
-  if (modeRadios && modeRadios.length) modeRadios.forEach(r => r.addEventListener("change", renderApp));
+  if (modeSwitch) {
+    const buttons = modeSwitch.querySelectorAll('.mode-btn');
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const m = btn.getAttribute('data-mode') === 'standard' ? 'standard' : 'tab';
+        currentMode = m;
+        modeSwitch.setAttribute('data-mode', m);
+        renderApp();
+      });
+    });
+  }
   if (rootToggle) rootToggle.addEventListener("change", renderApp);
   if (noteNameToggle) noteNameToggle.addEventListener("change", renderApp);
 });

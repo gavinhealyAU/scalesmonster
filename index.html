@@ -124,15 +124,16 @@
 
     .controls {
       display: flex;
-      flex-wrap: nowrap;
-      align-items: flex-end;
+      flex-wrap: wrap;
+      align-items: center;
       gap: 12px;
     }
 
     .control-group {
       display: inline-flex;
-      flex-direction: column;
-      gap: 6px;
+      flex-direction: row;
+      align-items: center;
+      gap: 8px;
       min-width: unset;
       width: auto;
     }
@@ -141,6 +142,8 @@
       font-size: 13px;
       color: var(--muted);
       font-weight: 600;
+      white-space: nowrap;
+      margin: 0;
     }
 
     select {
@@ -208,31 +211,51 @@
     .section-header button:hover { background: transparent; }
     .section-header button:focus { outline: none; box-shadow: none; }
 
-    .segmented {
+    /* Mode switch */
+    .mode-switch {
+      position: relative;
       display: inline-flex;
       align-items: center;
-      gap: 10px;
-      padding: 6px 8px;
+      justify-content: space-between;
+      gap: 0;
+      height: var(--control-h);
+      min-width: 220px;
+      padding: 4px;
       border-radius: 999px;
       border: 1px solid var(--border);
       background: rgba(20, 18, 16, 0.45);
-      position: relative;
-      overflow: hidden;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
     }
-    .segmented .pill {
+    .mode-btn {
+      position: relative;
+      z-index: 2;
+      flex: 1 1 50%;
+      height: 100%;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      font-weight: 700;
+      font-size: 14px;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+    .mode-switch[data-mode="tab"] .mode-btn[data-mode="tab"],
+    .mode-switch[data-mode="standard"] .mode-btn[data-mode="standard"] {
+      color: var(--text);
+    }
+    .mode-thumb {
       position: absolute;
+      z-index: 1;
       top: 4px;
       bottom: 4px;
-      left: 6px;
-      width: calc(50% - 8px);
+      left: 4px;
+      width: calc(50% - 4px);
       border-radius: 999px;
-      background: rgba(214, 158, 46, 0.18);
+      background: var(--pill);
+      border: 1px solid var(--border);
       transition: transform 0.2s ease;
-      z-index: 1;
     }
-    .segmented[data-active="standard"] .pill { transform: translateX(100%); }
-    .segmented label { position: relative; z-index: 2; color: var(--badge-text); font-weight: 600; }
-    .segmented input[type="radio"] { display: none; }
+    .mode-switch[data-mode="standard"] .mode-thumb { transform: translateX(100%); }
 
     select:focus {
       border-color: var(--accent);
@@ -333,7 +356,7 @@
       .controls { flex-wrap: wrap; }
       .control-group { width: 100%; }
       #keySelect, #scaleSelect { width: 100%; min-width: 0; }
-      .segmented { width: 100%; justify-content: space-between; }
+      .mode-switch { width: 100%; }
     }
   </style>
 </head>
@@ -400,12 +423,10 @@
 
         <div class="control-group">
           <span class="control-label">Mode</span>
-          <div class="segmented" data-active="tab" id="modeSegmented">
-            <div class="pill"></div>
-            <input type="radio" id="modeTab" name="mode" value="tab" checked>
-            <label for="modeTab">TAB</label>
-            <input type="radio" id="modeStd" name="mode" value="standard">
-            <label for="modeStd">Standard</label>
+          <div class="mode-switch" id="modeSwitch" data-mode="tab">
+            <button type="button" class="mode-btn" data-mode="tab">TAB</button>
+            <button type="button" class="mode-btn" data-mode="standard">Standard</button>
+            <div class="mode-thumb"></div>
           </div>
         </div>
 
@@ -423,7 +444,7 @@
           </label>
         </div>
       </div>
-      <div class="helper">Minor pentatonic shows 5 fixed boxes; all other scales show 3NPS positions.</div>
+      
     </div>
 
     <div id="output"></div>
