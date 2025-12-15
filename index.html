@@ -1,9 +1,31 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Guitar Scale Renderer</title>
+<title>Guitar Scales World | Interactive Guitar Scale Diagrams & TAB</title>
+
+<meta name="description" content="Explore guitar scales visually with interactive TAB and standard notation. Learn major, minor, pentatonic, modes, and more with playable diagrams and clean printable layouts.">
+
+<meta name="keywords" content="guitar scales, guitar scale diagrams, guitar tab scales, pentatonic scales, guitar modes, learn guitar scales, fretboard scales">
+
+<meta name="author" content="Guitar Scales World">
+<meta name="robots" content="index, follow">
+
+<link rel="canonical" href="https://guitarscales.world/">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="Guitar Scales World">
+<meta property="og:description" content="Interactive guitar scale diagrams with TAB, standard notation, playback, and print-ready layouts.">
+<meta property="og:url" content="https://guitarscales.world/">
+<meta property="og:image" content="https://guitarscales.world/og-image.png">
+
+
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="icon" href="/favicon-16.png" sizes="16x16" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
 
   <script defer src="https://unpkg.com/vexflow@4.2.3/build/cjs/vexflow.js"></script>
   <script defer src="./tab.js"></script>
@@ -171,8 +193,34 @@
     button:hover { background: rgba(214, 158, 46, 0.26); }
     button:focus { outline: none; box-shadow: 0 0 0 3px var(--accent-soft); border-color: var(--accent); }
 
-    /* Mini logo in the control bar */
+    /* Icon button for print */
+    .icon-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: auto;
+      height: auto;
+      padding: 0;
+      border: none;
+      background: transparent;
+      color: var(--text);
+      cursor: pointer;
+      transition: color 0.2s ease, opacity 0.2s ease;
+    }
+    .icon-btn:hover { opacity: 0.7; }
+    .icon-btn:focus { outline: none; }
 
+    /* Print header - hidden on screen */
+    .print-header {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #0f172a;
+    }
+    .print-logo { width: 60px; height: 60px; object-fit: contain; }
+    .print-title { font-size: 24px; font-weight: 700; color: #0f172a; }
 
     /* Audio icon button: icon-only, no border/background */
     .section-header button {
@@ -338,6 +386,55 @@
       #keySelect, #scaleSelect { width: 100%; min-width: 0; }
       .mode-switch { width: 100%; }
     }
+
+    @media print {
+      body {
+        background: white !important;
+        color: #0f172a !important;
+        margin: 0;
+        padding: 0;
+      }
+      body::before { display: none; }
+
+      .shell { padding: 20px; max-width: 100%; }
+
+      /* Hide screen-only elements */
+      .card, .floating-logo, .icon-btn { display: none !important; }
+
+      /* Show print header */
+      .print-header { display: flex !important; }
+
+      /* Clean section styles for print */
+      .section {
+        background: white !important;
+        border: 1px solid #ddd !important;
+        box-shadow: none !important;
+        page-break-inside: avoid;
+        margin-bottom: 20px;
+      }
+
+      .section-header {
+        color: #0f172a !important;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 8px;
+        margin-bottom: 12px;
+      }
+
+      /* Hide audio controls in print */
+      .section-header button,
+      .section-header label,
+      .section-header input[type="range"] { display: none !important; }
+
+      .section-body {
+        overflow: visible !important;
+      }
+
+      .section-body svg {
+        width: 100% !important;
+        height: auto !important;
+        max-width: 100% !important;
+      }
+    }
   </style>
 </head>
 
@@ -418,8 +515,17 @@
             Note Names
           </label>
         </div>
+
+        <button id="printBtn" class="icon-btn" aria-label="Print" style="margin-left: auto;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+        </button>
       </div>
       
+    </div>
+
+    <div class="print-header" id="printHeader">
+      <img src="./logo.png" alt="Logo" class="print-logo" />
+      <div class="print-title" id="printTitle">F# Minor Pentatonic</div>
     </div>
 
     <div id="output"></div>

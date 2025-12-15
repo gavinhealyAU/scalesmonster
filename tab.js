@@ -726,6 +726,9 @@ function renderSection(parent, title, notesData, mode) {
 function updateBadge(key, scale) {
   const badge = document.getElementById("keyScaleBadge");
   if (badge) badge.textContent = `${key} · ${scale}`;
+  
+  const printTitle = document.getElementById("printTitle");
+  if (printTitle) printTitle.textContent = `${key} ${scale}`;
 }
 
 let currentMode = "tab"; // default
@@ -794,6 +797,7 @@ window.addEventListener("DOMContentLoaded", () => {
   const modeSwitch = document.getElementById("modeSwitch");
   const rootToggle = document.getElementById("rootToggle");
   const noteNameToggle = document.getElementById("noteNameToggle");
+  const printBtn = document.getElementById("printBtn");
   const SCROLL_Y = 40;
   const LOGO_SHRINK_DISTANCE = 240;
   const LOGO_MIN_SCALE_DESKTOP = 0.6;
@@ -819,6 +823,7 @@ window.addEventListener("DOMContentLoaded", () => {
   }
   if (rootToggle) rootToggle.addEventListener("change", renderApp);
   if (noteNameToggle) noteNameToggle.addEventListener("change", renderApp);
+  if (printBtn) printBtn.addEventListener("click", () => window.print());
 
   function applyLogoScale() {
     const y = window.scrollY;
