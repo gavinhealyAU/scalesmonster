@@ -128,6 +128,37 @@ function alignAnnotationRow(containerEl, fixedY) {
   });
 }
 
+function getRenderWidth(containerEl, min = 320, max = 1400) {
+  const rect = containerEl?.getBoundingClientRect?.();
+  const measured = rect?.width || containerEl?.clientWidth || 860;
+  return Math.max(min, Math.min(max, Math.floor(measured)));
+}
+
+function createResponsiveRenderer(containerEl, height) {
+  const width = getRenderWidth(containerEl);
+  const renderer = new Renderer(containerEl, Renderer.Backends.SVG);
+  renderer.resize(width, height);
+  const ctx = renderer.getContext();
+
+  const svg = containerEl.querySelector("svg");
+  if (svg) {
+    svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+    svg.setAttribute("preserveAspectRatio", "xMinYMin meet");
+    svg.style.width = "100%";
+    svg.style.height = "auto";
+  }
+
+  return { renderer, ctx, width, height };
+}
+
+function debounce(fn, wait = 200) {
+  let t;
+  return (...args) => {
+    clearTimeout(t);
+    t = setTimeout(() => fn(...args), wait);
+  };
+}
+
 // ---------------------------
 // Scale pitch generation (exact MIDI, 2 octaves)
 // ---------------------------
@@ -355,11 +386,11 @@ function generateAllMinorPentBoxes(keyName) {
 function renderTab(containerEl, notesData) {
   containerEl.innerHTML = "";
 
-  const renderer = new Renderer(containerEl, Renderer.Backends.SVG);
-  renderer.resize(860, 190);
+  const { ctx, width } = createResponsiveRenderer(containerEl, 190);
+  const staveWidth = Math.max(120, width - 20);
+  const formatWidth = Math.max(80, width - 40);
 
-  const ctx = renderer.getContext();
-  const stave = new TabStave(10, 18, 840).setNumLines(6);
+  const stave = new TabStave(10, 18, staveWidth).setNumLines(6);
   stave.addClef("tab");
   stave.setContext(ctx).draw();
 
@@ -387,7 +418,7 @@ function renderTab(containerEl, notesData) {
   const voice = new Voice({ num_beats: tabNotes.length, beat_value: 4 }).setStrict(false);
   voice.addTickables(tabNotes);
 
-  new Formatter().joinVoices([voice]).format([voice], 800);
+  new Formatter().joinVoices([voice]).format([voice], formatWidth);
   voice.draw(ctx, stave);
 
   alignAnnotationRow(containerEl, 32);
@@ -396,15 +427,14 @@ function renderTab(containerEl, notesData) {
 function renderGrandStaff(containerEl, notesData) {
   containerEl.innerHTML = "";
 
-  const renderer = new Renderer(containerEl, Renderer.Backends.SVG);
-  renderer.resize(860, 260);
+  const { ctx, width } = createResponsiveRenderer(containerEl, 260);
+  const staveWidth = Math.max(180, width - 20);
+  const formatWidth = Math.max(120, width - 40);
 
-  const ctx = renderer.getContext();
-
-  const treble = new Stave(10, 20, 840).addClef("treble");
+  const treble = new Stave(10, 20, staveWidth).addClef("treble");
   treble.setContext(ctx).draw();
 
-  const bass = new Stave(10, 140, 840).addClef("bass");
+  const bass = new Stave(10, 140, staveWidth).addClef("bass");
   bass.setContext(ctx).draw();
 
   const brace = new StaveConnector(treble, bass);
@@ -471,7 +501,7 @@ function renderGrandStaff(containerEl, notesData) {
   const vT = new Voice({ num_beats: trebleNotes.length, beat_value: 4 }).setStrict(false).addTickables(trebleNotes);
   const vB = new Voice({ num_beats: bassNotes.length, beat_value: 4 }).setStrict(false).addTickables(bassNotes);
 
-  new Formatter().format([vT, vB], 800);
+  new Formatter().format([vT, vB], formatWidth);
   vT.draw(ctx, treble);
   vB.draw(ctx, bass);
 
@@ -759,6 +789,8 @@ window.addEventListener("DOMContentLoaded", () => {
   const LOGO_MIN_SCALE_MOBILE = 0.65;
   const rootStyle = document.documentElement.style;
 
+  const rerender = debounce(() => renderApp(), 200);
+
   renderApp();
 
   if (keySelect) keySelect.addEventListener("change", renderApp);
@@ -790,4 +822,5 @@ window.addEventListener("DOMContentLoaded", () => {
 
   applyLogoScale();
   window.addEventListener("scroll", applyLogoScale, { passive: true });
+  window.addEventListener("resize", rerender, { passive: true });
 });
