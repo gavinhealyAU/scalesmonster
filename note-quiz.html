@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fretboard Quiz - Guitar Scales</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <script defer src="./note-quiz.js"></script>
+  <style>
+    :root {
+      --bg: radial-gradient(1200px 700px at 20% 10%, rgba(22, 19, 16, 0.9) 0%, rgba(18, 16, 14, 0.95) 40%, rgba(12, 11, 10, 1) 100%),
+             linear-gradient(180deg, rgba(30, 27, 24, 0.6) 0%, rgba(17, 16, 15, 0.8) 100%);
+      --card: rgba(40, 36, 32, 0.55);
+      --border: rgba(255, 199, 125, 0.18);
+      --shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+      --text: #e6e1db;
+      --muted: #b3a89b;
+      --accent: #39ff14;
+      --accent-soft: rgba(57, 255, 20, 0.15);
+      --pill: rgba(57, 255, 20, 0.12);
+      --radius: 14px;
+      --radius-sm: 10px;
+      --font: 'Press Start 2P', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      --arcade-glow: 0 0 8px #39ff14, 0 0 16px #39ff14;
+      --scanline: repeating-linear-gradient(180deg, rgba(0,0,0,0.08) 0px, rgba(0,0,0,0.08) 2px, transparent 2px, transparent 6px);
+        --logo-base-size: 200px;
+      --logo-scale: 1;  
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: var(--font);
+      color: var(--text);
+      background: var(--bg);
+      -webkit-font-smoothing: antialiased;
+      position: relative;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background: var(--scanline);
+      opacity: 0.35;
+      z-index: 1;
+    }
+    .shell {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 18px 18px 40px;
+      position: relative;
+      z-index: 2;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 18px;
+    }
+    .header-title {
+      font-size: 2.1rem;
+      color: var(--accent);
+      text-shadow: var(--arcade-glow);
+      letter-spacing: 0.04em;
+      margin-bottom: 6px;
+    }
+    .header-sub {
+      font-size: 1rem;
+      color: var(--muted);
+      margin-bottom: 0;
+      letter-spacing: 0.02em;
+    }
+    .controls-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 18px;
+    }
+    .controls-row label {
+      font-size: 13px;
+      color: var(--muted);
+      font-family: var(--font);
+      margin-right: 6px;
+    }
+    .controls-row select, .controls-row input[type="checkbox"] {
+      font-family: var(--font);
+      font-size: 13px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: rgba(20, 18, 16, 0.65);
+      color: var(--text);
+      padding: 4px 10px;
+      margin-right: 8px;
+    }
+    .controls-row input[type="checkbox"] {
+      width: 16px; height: 16px; accent-color: var(--accent);
+      margin-right: 2px;
+    }
+    .controls-row button {
+      font-family: var(--font);
+      font-size: 13px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 700;
+      padding: 7px 18px;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(57,255,20,0.08);
+      transition: background 0.18s, color 0.18s;
+      margin-right: 4px;
+    }
+    .controls-row button:active {
+      background: var(--accent);
+      color: #181818;
+    }
+    .note-panel {
+      background: rgba(20, 18, 16, 0.85);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 18px 20px 14px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      justify-content: space-between;
+      min-height: 80px;
+      box-shadow: 0 0 0 2px rgba(57,255,20,0.04);
+    }
+    .arcade-big {
+      font-family: 'Press Start 2P', var(--font);
+      font-size: 1.5rem;
+      color: var(--accent);
+      text-shadow: var(--arcade-glow);
+      letter-spacing: 0.04em;
+      margin-bottom: 6px;
+    }
+    .score-timer {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 6px;
+      min-width: 120px;
+    }
+    .score-label, .timer-label {
+      font-size: 13px;
+      color: var(--muted);
+      font-family: var(--font);
+    }
+    .score-value {
+      font-size: 1.2rem;
+      color: var(--accent);
+      font-family: 'Press Start 2P', var(--font);
+      text-shadow: var(--arcade-glow);
+    }
+    .output-container {
+      background: #181818;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow);
+      padding: 20px;
+      min-height: 320px;
+      display: flex;
+      align-items: stretch;
+      justify-content: flex-start;
+      margin-bottom: 18px;
+      position: relative;
+      z-index: 2;
+    }
+    #fretboardMount {
+      width: 100%;
+      min-width: 0;
+    }
+    #fretboardMount svg {
+      width: 100%;
+      height: 260px;
+      display: block;
+      touch-action: none;
+      background: transparent;
+    }
+    .quiz-input-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 18px;
+      margin-bottom: 8px;
+    }
+    .quiz-input-row input[type="text"] {
+      font-family: 'Press Start 2P', var(--font);
+      font-size: 1.1rem;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      border: 2px solid var(--accent);
+      background: #101010;
+      color: var(--accent);
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(57,255,20,0.08);
+      text-align: center;
+      width: 120px;
+      letter-spacing: 0.04em;
+      transition: border 0.18s, box-shadow 0.18s;
+    }
+    .quiz-input-row input[type="text"]:focus {
+      border: 2px solid #fff200;
+      box-shadow: 0 0 0 3px #fff20044;
+    }
+    .quiz-input-row button {
+      font-family: 'Press Start 2P', var(--font);
+      font-size: 1rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 700;
+      padding: 8px 18px;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(57,255,20,0.08);
+      transition: background 0.18s, color 0.18s;
+    }
+    .quiz-input-row button:active {
+      background: var(--accent);
+      color: #181818;
+    }
+    .feedback {
+      text-align: center;
+      font-family: 'Press Start 2P', var(--font);
+      font-size: 1.1rem;
+      margin-top: 10px;
+      margin-bottom: 10px;
+      min-height: 32px;
+      color: #fff200;
+      text-shadow: 0 0 8px #fff200, 0 0 16px #fff200;
+      letter-spacing: 0.04em;
+      transition: color 0.18s;
+    }
+    .feedback.correct {
+      color: #39ff14;
+      text-shadow: 0 0 8px #39ff14, 0 0 16px #39ff14;
+      animation: correctFlash 0.3s;
+    }
+    .feedback.incorrect {
+      color: #ff1744;
+      text-shadow: 0 0 8px #ff1744, 0 0 16px #ff1744;
+      animation: incorrectFlash 0.3s;
+    }
+    @keyframes correctFlash {
+      0% { background: #39ff14; color: #181818; }
+      100% { background: none; }
+    }
+    @keyframes incorrectFlash {
+      0% { background: #ff1744; color: #181818; }
+      100% { background: none; }
+    }
+    .high-scores-panel {
+      background: #181818;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow);
+      padding: 18px 20px 14px;
+      margin-bottom: 18px;
+      color: var(--accent);
+      font-family: 'Press Start 2P', var(--font);
+      font-size: 1rem;
+      text-align: center;
+      letter-spacing: 0.04em;
+      position: relative;
+      z-index: 2;
+    }
+    .high-scores-panel h3 {
+      color: #fff200;
+      font-size: 1.1rem;
+      margin-bottom: 10px;
+      margin-top: 0;
+      text-shadow: 0 0 8px #fff200, 0 0 16px #fff200;
+    }
+    .high-scores-list {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 10px 0;
+      color: var(--accent);
+      font-size: 1rem;
+    }
+    .high-scores-list li {
+      margin-bottom: 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: 'Press Start 2P', var(--font);
+      font-size: 1rem;
+      letter-spacing: 0.04em;
+    }
+    .high-scores-list .score-date {
+      color: var(--muted);
+      font-size: 0.8rem;
+      margin-left: 8px;
+    }
+    .clear-high-scores {
+      font-size: 0.9rem;
+      color: #ff1744;
+      background: none;
+      border: none;
+      cursor: pointer;
+      margin-top: 8px;
+      text-decoration: underline;
+      font-family: 'Press Start 2P', var(--font);
+    }
+    @media (max-width: 640px) {
+      .shell { padding: 8px 2px 30px; }
+      .header-title { font-size: 1.2rem; }
+      .arcade-big { font-size: 1.1rem; }
+      .note-panel { flex-direction: column; text-align: center; gap: 10px; }
+      .score-timer { align-items: center; min-width: 0; }
+      .output-container { padding: 8px; min-height: 180px; }
+      .high-scores-panel { padding: 10px 6px 8px; font-size: 0.9rem; }
+    }
+ .site-footer {
+  margin-top: 40px;
+  padding: 18px 16px 22px;
+  border-top: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.footer-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.footer-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.footer-left strong {
+  color: var(--text);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.footer-left span {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.footer-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.footer-right .divider {
+  opacity: 0.5;
+}
+ /* Floating logo & badge */
+    .floating-logo {
+      position: fixed;
+      bottom: 14px;
+      right: 14px;
+      z-index: 50;
+      border: none;
+      border-radius: 14px;
+      box-shadow: none;
+      padding: 12px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background: transparent;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+    }
+    .floating-logo img {
+      width: calc(var(--logo-base-size) * var(--logo-scale));
+      height: calc(var(--logo-base-size) * var(--logo-scale));
+      object-fit: contain;
+      transition: width 220ms ease, height 220ms ease;
+    }
+
+    body.is-scrolled .floating-logo { padding: 10px; }
+
+</style>
+</head>
+<body>
+        <a class="floating-logo" href="#" aria-label="Guitar Scales World">
+    <img src="./logo3.png" alt="Guitar Scales World logo" />
+  </a>
+  <div class="shell">
+    <div class="header">
+      <div class="header-title">Fretboard Quiz</div>
+      <div class="header-sub">Name the note on the fretboard</div>
+    </div>
+    <div class="controls-row">
+      <label>String range
+        <select id="stringRange">
+          <option value="all">All strings</option>
+          <option value="treble">Treble (1-3)</option>
+          <option value="bass">Bass (4-6)</option>
+        </select>
+      </label>
+      <label>Fret range
+        <select id="fretRange">
+          <option value="0-5">0-5</option>
+          <option value="0-12">0-12</option>
+          <option value="0-24" selected>0-24</option>
+        </select>
+      </label>
+      <label><input type="checkbox" id="acceptFlats"> Accept flats</label>
+      <label><input type="checkbox" id="acceptSharps" checked> Accept sharps</label>
+      <button id="startQuizBtn">Start Quiz</button>
+      <button id="resetBtn">Reset</button>
+    </div>
+    <div class="note-panel">
+      <div>
+        <div class="arcade-big" id="questionNum">Question 1/10</div>
+        <div class="feedback" id="feedback"></div>
+      </div>
+      <div class="score-timer">
+        <div class="score-label">Score</div>
+        <div class="score-value" id="score">0</div>
+        <div class="timer-label">Time</div>
+        <div class="score-value" id="timer">0.0s</div>
+      </div>
+    </div>
+    <div class="output-container">
+      <div id="fretboardMount"></div>
+    </div>
+    <div class="quiz-input-row" id="quizInputRow" style="display:none;">
+      <input type="text" id="noteInput" maxlength="3" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Note...">
+      <button id="submitBtn">Submit</button>
+    </div>
+    <div class="high-scores-panel" id="highScoresPanel" style="display:none;"></div>
+  </div>
+
+   <footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-left">
+      <strong>Guitar Scales World</strong>
+      <span>Practice. Precision. Flow.</span>
+
+    </div>
+
+    <div class="footer-right">
+              <span>&copy; <span id="year"></span> guitarscales.world</span>
+      <span class="divider">•</span>
+         <a href="index.html" style="color:var(--accent);text-decoration:none;">Check out Scales Map</a>
+      <span class="divider">•</span>
+      <a href="note-finder.html" style="color:var(--accent);text-decoration:none;">Check out Note Finder</a> 
+      <span class="divider">•</span>
+      <span>Built for guitarists</span>
+
+    </div>
+  </div>
+</footer>  
+</body>
+</html>
